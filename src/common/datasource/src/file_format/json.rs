@@ -16,7 +16,6 @@ use std::collections::HashMap;
 use std::io::BufReader;
 use std::str::FromStr;
 
-use arrow::array::builder;
 use arrow::json;
 use arrow::json::WriterBuilder;
 use arrow::json::reader::{ValueIter, infer_json_schema_from_iterator};
@@ -37,7 +36,7 @@ use crate::error::{self, Result};
 use crate::file_format::{self, FileFormat, stream_to_file};
 use crate::share_buffer::SharedBuffer;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JsonFormat {
     pub schema_infer_max_record: Option<usize>,
     pub compression_type: CompressionType,
@@ -144,15 +143,15 @@ pub async fn stream_to_json(
         |buffer| {
             let mut builder = WriterBuilder::new();
             if let Some(timestamp_format) = &format.timestamp_format {
-                builder = builder.with_timestamp_format(timestamp_format);
+                builder = builder.with_timestamp_format(timestamp_format.to_owned());
             }
             if let Some(time_format) = &format.time_format {
-                builder = builder.with_time_format(time_format);
+                builder = builder.with_time_format(time_format.to_owned());
             }
             if let Some(date_format) = &format.date_format {
-                builder = builder.with_date_format(date_format);
+                builder = builder.with_date_format(date_format.to_owned());
             }
-            builder.build::<_, LineDelimited>(buffer);
+            builder.build::<_, LineDelimited>(buffer)
         },
     )
     .await
